@@ -1,5 +1,3 @@
-
-
 async function getAllHrefs(page) {
     try {
         let hrefs = await page.$$eval('a', (anchorEls) => anchorEls.map((a) => a.href));

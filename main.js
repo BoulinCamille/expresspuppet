@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 var bodyParser = require('body-parser');
-const functions = require('./test/functions')
+const functions = require('./functions')
 
 
 
