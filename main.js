@@ -48,7 +48,7 @@ app.post('/crawl', async (req, res) => {
         }
         
         try {
-            dataObj = {}
+            dataObj = {};
             dataObj['price'] = functions.getPrice(page, req.body.price);
             dataObj['name'] = await page2.$eval(req.body.name, n => n.textContent);
             dataObj['url'] = uniqueHrefs[uniqueHrefs.length-1];
@@ -60,7 +60,7 @@ app.post('/crawl', async (req, res) => {
         }
         uniqueHrefs.pop();
         await page2.close();
-        console.log(uniqueHrefs.length)
+        console.log(uniqueHrefs.length);
     }
     await page.close();
     await browser.close();
@@ -69,19 +69,16 @@ app.post('/crawl', async (req, res) => {
 
 
 app.post('/crawl-one', async (req, res) => {
-    datas = [];
-    for (let i = 0; i <=10; i++) {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
-        await page.goto(req.body.url);
-        const dataObj = await functions.scanOneUrl(page, req.body.price, req.body.name);
-        datas.push(dataObj);
-        await page.close();
-        await browser.close();
-    }
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(req.body.url);
     
-
-    res.send(datas);
+    const dataObj = await functions.scanOneUrl(page, req.body.price, req.body.name);
+   
+    await page.close();
+    await browser.close();
+    
+    res.send(dataObj);
 });
 
 app.listen(port, () => {
