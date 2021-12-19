@@ -4,7 +4,7 @@ var bodyParser = require('body-parser');
 const functions = require('./functions')
 const ObjectsToCsv = require('objects-to-csv');
 const fs = require('fs');
-
+const randomUserAgent = require("random-useragent");
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin);
@@ -70,49 +70,88 @@ app.post('/crawl', async (req, res) => {
 
 
 app.post('/crawl-one', async (req, res) => {
-    const preloadFile = fs.readFileSync('./preload.js', 'utf8');
-    
-    const args = [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-infobars',
-        '--window-position=0,0',
-        '--ignore-certifcate-errors',
-        '--ignore-certifcate-errors-spki-list',
-        '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"'
-    ];
+    const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36';
+    const userAgent = randomUserAgent.getRandom();
+    const UA = userAgent || USER_AGENT;
+    console.log(UA);
 
-    const options = {
-        args,
-        headless: true,
-        ignoreHTTPSErrors: true,
-        userDataDir: "./Default"
-    };
+    const browser = await puppeteer.launch();
 
-    let datas = [];
-    const browser = await puppeteer.launch(options);
     const page = await browser.newPage();
-    await page.evaluateOnNewDocument(preloadFile);
-    await page.goto(req.body.url);
-    await page.setRequestInterception(true);
-    page.on("request", r => {
-        if (
-          ["image", "stylesheet", "font", "script"].indexOf(r.resourceType()) !== -1 
-        ) {
-          r.abort();
-        } else {
-          r.continue();
-        }
-      });
-    const dataObj = await functions.scanOneUrl(page, req.body.price, req.body.name);
-    datas.push(dataObj);
+    await page.setViewport({
+        width: 1920 + Math.floor(Math.random() * 100),
+        height: 3000 + Math.floor(Math.random() * 100),
+        deviceScaleFactor: 1,
+        hasTouch: false,
+        isLandscape: false,
+        isMobile: false,
+    });
+    console.log("after viewport");
+    await page.setUserAgent(UA);
+    await page.setJavaScriptEnabled(true);
+    await page.setDefaultNavigationTimeout(0);
 
-    await page.close();
-    await browser.close();
+    await page.setRequestInterception(true);
+    await page.on('request', (req) => {
+        console.log("requests");
+        if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image') {
+            req.abort();
+        } else {
+            req.continue();
+        }
+    });
+    console.log("after req block");
+
+
+    await page.evaluateOnNewDocument(() => {
+        console.log("1");
+        Object.defineProperties(navigator, 'webdriver', {
+            get: () => false
+        })
+    });
+
+    await page.evaluateOnNewDocument(() => {
+        console.log("2");
+        window.chrome = {
+            runtime : {}
+        }
+    });
+
+    await page.evaluateOnNewDocument(() =>{
+        console.log("3");
+        const originalQuery = window.navigator.permissions.query;
+        return windwow.navigator.permissions.query = (parameters) => {
+            parameters.name == 'notifications' ?
+                Promise.resolve({state: Notification.permission}) :
+                originalQuery(parameters);
+        }
+    });
+
+    await page.evaluateOnNewDocument(() => {
+        console.log("4");
+        Object.defineProperties(navigator, 'plugins', {
+            get : () => [1, 2, 3, 4, 5],
+        });
+    });
+
+    await page.evaluateOnNewDocument(() => {
+        console.log("5");
+        Object.defineProperty(navigator, 'languages', {
+            get: () => ['fr-FR', 'fr'],
+        });
+    });
+
+    const cookies = await page.cookies(req.body.url);
+    await page.deleteCookie(...cookies);
+    await page.goto(req.body.url, { waitUntil: 'networkidle2',timeout: 0 });
+    // const dataObj = await functions.scanOneUrl(page, req.body.price, req.body.name);
+    await page.screenshot({path:'test.png'});
+    // await page.close();
+    // await browser.close();
     
-    const csv = new ObjectsToCsv(datas);
-    await csv.toDisk('./product.csv');
-    res.send(dataObj);
+    // const csv = new ObjectsToCsv(datas);
+    // await csv.toDisk('./product.csv');
+    res.send("OK");
 });
 
 
