@@ -20,6 +20,12 @@ async function getPrice(page, selector) {
     } catch(e) {
         console.log(e);
     }
+    try {
+        price = deleteCurrencyPrice(price).trim();
+    } catch (e) {
+        console.log(e);
+    }
+    
     
     return price;
 }
@@ -44,4 +50,17 @@ async function scanOneUrl(page, priceSelector, nameSelector) {
 }
 
 
-module.exports = { getAllHrefs, getPrice, getName, scanOneUrl }
+function deleteCurrencyPrice(price) {
+    try {
+        if (price.search('€') !== -1) {
+            price = price.replace('€', "");
+        }
+    } catch (e) {
+        console.log(e);
+    }
+    
+    return price;
+}
+
+
+module.exports = { deleteCurrencyPrice, getAllHrefs, getPrice, getName, scanOneUrl }
