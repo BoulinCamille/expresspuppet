@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 var bodyParser = require('body-parser');
 const functions = require('./functions')
-
+const ObjectsToCsv = require('objects-to-csv')
 
 
 const puppeteer = require("puppeteer-extra");
@@ -28,7 +28,6 @@ app.get("/", (req, res) => {
 
 
 app.post('/crawl', async (req, res) => {
-    const products = {};
     const url = req.body.url;
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -52,7 +51,8 @@ app.post('/crawl', async (req, res) => {
             dataObj['price'] = functions.getPrice(page, req.body.price);
             dataObj['name'] = await page2.$eval(req.body.name, n => n.textContent);
             dataObj['url'] = uniqueHrefs[uniqueHrefs.length-1];
-            products[i] = dataObj;
+            const csv = new ObjectsToCsv([dataObj]); 
+            await csv.toDisk('./products.csv', { append : true});
             console.log("YESPRODUI");
             i++;
         } catch (e) {
@@ -62,6 +62,7 @@ app.post('/crawl', async (req, res) => {
         await page2.close();
         console.log(uniqueHrefs.length);
     }
+    
     await page.close();
     await browser.close();
     res.send(products);
@@ -69,15 +70,19 @@ app.post('/crawl', async (req, res) => {
 
 
 app.post('/crawl-one', async (req, res) => {
+    let datas = [];
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.goto(req.body.url);
     
     const dataObj = await functions.scanOneUrl(page, req.body.price, req.body.name);
-   
+    datas.push(dataObj);
+
     await page.close();
     await browser.close();
     
+    const csv = new ObjectsToCsv(datas);
+    await csv.toDisk('./product.csv');
     res.send(dataObj);
 });
 
