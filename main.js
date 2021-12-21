@@ -4,6 +4,23 @@ var bodyParser = require('body-parser');
 const functions = require('./functions')
 const ObjectsToCsv = require('objects-to-csv');
 const fs = require('fs');
+const mongoose = require('mongoose');
+const Student = require('./Student');   
+
+
+mongoose.connect('mongodb://localhost:27017/usersdb',
+  {
+    useNewUrlParser: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true
+  }
+);
+
+db = mongoose.connection;
+db.on('error', console.error.bind(console, "connection error"));
+db.once('open', function() {
+    console.log("connecte a mongoose");
+});
 
 const app = express();
 
@@ -84,11 +101,7 @@ app.post('/crawl-one', async (req, res) => {
 });
 
 
-app.get('/test', (req, res) => {
-    const file = "C:/Users/camil/OneDrive/Bureau/expresspuppet/products.csv";
-    const products = csv.toOjects(file);
-    res.send(products);
-});
+
 
 app.listen(port, () => {
     console.log("poney");
