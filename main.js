@@ -94,7 +94,7 @@ app.post('/crawl-one', async (req, res) => {
 });
 
 
-app.get('/pd', async (req, res) => {
+app.get('/mong', async (req, res) => {
     const data = {
         url_si: "https://www.test.com",
         nom_si: "test.com"
