@@ -110,6 +110,15 @@ app.get('/mong', async (req, res) => {
 });
 
 
+app.get('/sites', (req, res) => {
+    Site.find({}, (err, result) => {
+        if (err) throw err;
+        res.send(result);
+    });
+
+})
+
+
 
 app.listen(port, (err) => {
     if (err) console.log(err);
