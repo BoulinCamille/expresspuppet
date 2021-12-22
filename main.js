@@ -1,34 +1,27 @@
 const express = require('express');
 const path = require('path');
-var bodyParser = require('body-parser');
 const functions = require('./functions')
 const ObjectsToCsv = require('objects-to-csv');
 const fs = require('fs');
 const mongoose = require('mongoose');
-const Student = require('./Student');   
+const Site = require("./models/Site");
 
 
-mongoose.connect('mongodb://localhost:27017/usersdb',
-  {
-    useNewUrlParser: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true
-  }
-);
 
-db = mongoose.connection;
+mongoose.connect('mongodb://127.0.0.1:27017/project_db', { useUnifiedTopology: true, useNewUrlParser: true });
+
+let db = mongoose.connection;
 db.on('error', console.error.bind(console, "connection error"));
-db.once('open', function() {
+db.once('open', () => {
     console.log("connecte a mongoose");
 });
 
 const app = express();
 
-app.use(bodyParser.urlencoded({
-    extended: true
-})); 
 
-app.use(bodyParser.json() );
+app.set('views', path.join(__dirname, 'views'))
+app.set('view engine', 'pug');
+
 
 app.use(express.json());
 app.use(express.urlencoded());
@@ -101,8 +94,24 @@ app.post('/crawl-one', async (req, res) => {
 });
 
 
+app.get('/pd', async (req, res) => {
+    const data = {
+        url_si: "https://www.test.com",
+        nom_si: "test.com"
+    };
+    const site = await new Site(data);
+    console.log(site);
+    site.save((err, site) => {
+        if (err) return console.log(err)
+        console.log(site.nom_si + " ajoute a la collection");
+    });
+
+    res.send("OK");
+});
 
 
-app.listen(port, () => {
+
+app.listen(port, (err) => {
+    if (err) console.log(err);
     console.log("poney");
 });
